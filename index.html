@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ELITE CRYSTALS | Final Build</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: #000000; 
+            --card: #0a0a0c; 
+            --accent: #0041ff; 
+            --accent-glow: rgba(0, 65, 255, 0.8);
+            --neon-green: #39FF14; 
+            --neon-green-glow: rgba(57, 255, 20, 0.8);
+            --neon-red: #ff0033;
+            --text: #ffffff;
+            --gray: #71717a;
+            --border: #1a1a1e;
+            --grad-blue: linear-gradient(135deg, #0041ff, #001a66);
+        }
+
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 15px; padding-bottom: 110px; padding-top: 70px; user-select: none; overflow-x: hidden; }
+
+        /* --- LOADING SCREEN --- */
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .loader-title { font-size: 34px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 40px; text-align: center; animation: titleGlow 1.5s infinite alternate; }
+        @keyframes titleGlow { from { text-shadow: 0 0 10px var(--accent); } to { text-shadow: 0 0 30px var(--accent), 0 0 50px var(--accent); } }
+        .loader-bar-container { width: 75%; height: 30px; background: #0a0a0a; border-radius: 50px; border: 2px solid #1a1a1e; overflow: hidden; position: relative; }
+        #loader-fill { height: 100%; width: 0%; background: var(--neon-green); box-shadow: 0 0 25px var(--neon-green-glow); }
+        #loader-num { position: absolute; width: 100%; line-height: 26px; text-align: center; font-size: 14px; font-weight: 900; color: #fff; mix-blend-mode: difference; z-index: 10; }
+
+        /* --- TOP WIDGETS --- */
+        .wallet-persistent { position: fixed; top: 15px; right: 15px; background: rgba(10, 10, 12, 0.95); border: 2px solid var(--accent); border-radius: 14px; padding: 10px 18px; z-index: 9999; box-shadow: 0 0 20px rgba(0, 65, 255, 0.4); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 10px; }
+        .profit-hour-persistent { position: fixed; top: 15px; left: 15px; background: rgba(10, 10, 12, 0.95); border: 2px solid var(--neon-green); border-radius: 14px; padding: 10px 18px; z-index: 9999; box-shadow: 0 0 20px rgba(57, 255, 20, 0.3); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 10px; }
+        .val { font-weight: 900; font-size: 17px; color: #fff; }
+
+        .main-title { font-size: 32px; font-weight: 900; color: #fff; text-transform: uppercase; text-align: center; animation: glowPulseExtreme 1.5s infinite alternate; margin: 10px 0 25px 0; }
+        @keyframes glowPulseExtreme { from { text-shadow: 0 0 7px #fff, 0 0 15px var(--accent); } to { text-shadow: 0 0 10px #fff, 0 0 40px var(--accent), 0 0 70px var(--accent); } }
+
+        /* --- CARDS & GRID --- */
+        .stat-card-static { background: var(--card); border: 2px solid var(--accent); border-radius: 24px; padding: 30px; text-align: center; box-shadow: 0 0 20px rgba(0, 65, 255, 0.2); margin-bottom: 20px; }
+        .card-tienda, .card-retiro { background: var(--card); border-radius: 28px; padding: 35px 25px; border: 1px solid var(--border); text-align: center; margin-bottom: 25px; }
+        #grid-campo { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        
+        /* --- ELEMENTS --- */
+        .item-icon { font-size: 70px; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--accent-glow)); }
+        .item-name { font-size: 26px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .item-desc { color: var(--gray); font-size: 13px; line-height: 1.6; font-style: italic; margin-bottom: 15px; padding: 0 10px; }
+        .item-duration { color: var(--neon-red); font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; }
+        
+        /* QTY SELECTOR */
+        .qty-selector { display: flex; align-items: center; justify-content: center; gap: 20px; background: #000; border-radius: 15px; padding: 10px; border: 1px solid var(--border); margin: 0 auto 20px auto; width: fit-content; }
+        .qty-btn { background: #1a1a1e; border: 1px solid #333; color: white; width: 35px; height: 35px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .qty-num { font-size: 20px; font-weight: 900; min-width: 25px; }
+
+        .custom-input { width: 100%; background: #000; border: 1px solid var(--border); padding: 18px; border-radius: 15px; color: #fff; margin-bottom: 15px; outline: none; text-align: center; font-weight: 700; box-sizing: border-box; }
+        .btn-buy { background: var(--neon-green); color: #000; border: none; width: 100%; padding: 20px; border-radius: 16px; font-weight: 900; text-transform: uppercase; box-shadow: 0 0 25px var(--neon-green-glow); cursor: pointer; }
+
+        .waitlist-item { background: #0a0a0a; border: 1px solid #1a1a1e; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left;}
+        .status-tag { color: #facc15; font-size: 10px; font-weight: 900; text-transform: uppercase; background: rgba(250, 204, 21, 0.1); padding: 4px 8px; border-radius: 5px; }
+
+        /* --- NAVBAR --- */
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.98); display: flex; justify-content: space-around; padding: 18px 0; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-item { background: none; border: none; color: var(--gray); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;}
+        .nav-item.active { color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <h1 class="loader-title">ELITE CRYSTALS</h1>
+        <div class="loader-bar-container"><div id="loader-fill"></div><div id="loader-num">0%</div></div>
+    </div>
+
+    <div class="profit-hour-persistent">⚡<span class="val">$ <span id="val-hour">0.00</span>/h</span></div>
+    <div class="wallet-persistent">💰<span class="val">$ <span id="bal-global">0.00</span></span></div>
+
+    <div id="juego" class="tab-content active">
+        <h1 class="main-title">ELITE CRYSTALS</h1>
+        <div class="stat-card-static">
+            <div style="font-size:12px; font-weight:800; color:var(--gray); margin-bottom:12px;">⛏️ MINING REWARDS</div>
+            <p style="font-size:38px; font-weight:900; color:var(--neon-green); margin:0;">$ <span id="bal-campo">0.000000</span></p>
+        </div>
+        <div style="display:flex; justify-content:center; margin-bottom: 25px;">
+            <button style="background: var(--grad-blue); color: #fff; border: none; padding: 18px 50px; border-radius: 20px; font-size: 16px; font-weight: 800; text-transform: uppercase; box-shadow: 0 5px 20px var(--accent-glow); cursor: pointer;" onclick="collectEarnings()">Collect Profits ⚡</button>
+        </div>
+        <div id="grid-campo"></div>
+    </div>
+
+    <div id="tienda" class="tab-content"><h1 class="main-title">SHOP</h1><div id="lista-tienda"></div></div>
+
+    <div id="recarga" class="tab-content">
+        <h1 class="main-title">DEPOSIT</h1>
+        <div class="card-retiro">
+            <p style="color:#ff3e3e; font-weight:900; font-size:13px; margin-bottom:15px;">⚠️ TRC20 NETWORK ONLY ⚠️</p>
+            <div style="background: #000; border-radius: 15px; padding: 15px; border: 1px dashed var(--accent); color: #fff; font-family: monospace; font-size: 10px; word-break: break-all; margin-bottom: 10px;" id="wallet-addr">TY439TSGyGHMJwok2KAQsVSALEdsW8AULK</div>
+            <button style="background: rgba(0, 65, 255, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; margin-bottom: 25px;" onclick="copyWallet()">Copy Address 📋</button>
+            <input type="number" id="dep-amt" class="custom-input" placeholder="0.00">
+            <input type="text" id="dep-hash" class="custom-input" placeholder="TRANSACTION HASH">
+            <button class="btn-buy" onclick="runVerification()">VERIFY PAYMENT</button>
+        </div>
+    </div>
+
+    <div id="retiro" class="tab-content">
+        <h1 class="main-title">OUT</h1>
+        <div class="card-retiro">
+            <input type="text" id="out-addr" class="custom-input" placeholder="WALLET ADDRESS">
+            <input type="number" id="out-amt" class="custom-input" placeholder="AMOUNT TO WITHDRAW">
+            <button class="btn-buy" onclick="requestWithdraw()">SEND REQUEST</button>
+        </div>
+        <div style="margin-top:20px;">
+            <h3 style="color:var(--gray); font-size:12px; font-weight:900; text-transform:uppercase;">Waiting List</h3>
+            <div id="waitlist-items"></div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('juego', this)">💎<span>FIELD</span></button>
+        <button class="nav-item" onclick="switchTab('tienda', this)">🛒<span>RELICS</span></button>
+        <button class="nav-item" onclick="switchTab('recarga', this)">💳<span>DEPOSIT</span></button>
+        <button class="nav-item" onclick="switchTab('retiro', this)">📤<span>OUT</span></button>
+    </nav>
+
+    <script>
+        let wallet = parseFloat(localStorage.getItem('ec_wallet')) || 0;
+        let activePlants = JSON.parse(localStorage.getItem('ec_plants')) || [];
+        let minedBalance = parseFloat(localStorage.getItem('ec_mined')) || 0;
+        let waitlist = JSON.parse(localStorage.getItem('ec_waitlist')) || [];
+        let lastTime = parseInt(localStorage.getItem('ec_last_sync')) || Date.now();
+
+        let pL = 0; 
+        let intL = setInterval(() => { 
+            pL += 10; 
+            if(document.getElementById('loader-fill')) document.getElementById('loader-fill').style.width = pL + '%'; 
+            if(document.getElementById('loader-num')) document.getElementById('loader-num').innerText = pL + '%'; 
+            if (pL >= 100) { 
+                clearInterval(intL); 
+                document.getElementById('loading-screen').style.display = 'none'; 
+                initGame();
+            } 
+        }, 50);
+
+        function initGame() {
+            calculateOfflineMining();
+            initTienda();
+            renderWaitlist();
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('bal-global').innerText = wallet.toFixed(2);
+            document.getElementById('bal-campo').innerText = minedBalance.toFixed(6);
+            let totalPs = activePlants.reduce((acc, p) => acc + p.ps, 0);
+            document.getElementById('val-hour').innerText = (totalPs * 3600).toFixed(2);
+            
+            localStorage.setItem('ec_wallet', wallet);
+            localStorage.setItem('ec_plants', JSON.stringify(activePlants));
+            localStorage.setItem('ec_mined', minedBalance);
+            localStorage.setItem('ec_waitlist', JSON.stringify(waitlist));
+            localStorage.setItem('ec_last_sync', Date.now());
+        }
+
+        function calculateOfflineMining() {
+            const now = Date.now(), diff = Math.floor((now - lastTime) / 1000);
+            if (diff > 0) {
+                activePlants.forEach(p => {
+                    const miningTime = Math.min(diff, Math.floor(Math.max(0, p.expira - lastTime) / 1000));
+                    if (miningTime > 0) { const gain = miningTime * p.ps; p.genTotal += gain; minedBalance += gain; }
+                });
+                updateUI();
+            }
+        }
+
+        function copyWallet() { navigator.clipboard.writeText("TY439TSGyGHMJwok2KAQsVSALEdsW8AULK"); alert("Copied!"); }
+
+        function runVerification() {
+            const amt = parseFloat(document.getElementById('dep-amt').value);
+            if(!amt || amt < 10) return alert("Min $10");
+            wallet += amt; updateUI(); alert("SUCCESS! Balance updated.");
+        }
+
+        function requestWithdraw() {
+            const addr = document.getElementById('out-addr').value;
+            const amt = parseFloat(document.getElementById('out-amt').value);
+            if (!addr || amt < 10 || amt > wallet) return alert("Error: Check balance or min $10");
+            wallet -= amt;
+            waitlist.unshift({ addr, amt, status: 'In Wait...' });
+            updateUI(); renderWaitlist(); alert("Request Sent!");
+        }
+
+        function renderWaitlist() {
+            const container = document.getElementById('waitlist-items');
+            if(!container) return;
+            container.innerHTML = waitlist.map(item => `<div class="waitlist-item"><div><div style="font-size:13px; font-weight:900;">$ ${item.amt.toFixed(2)}</div><div style="font-size:8px; color:var(--gray);">To: ${item.addr}</div></div><div class="status-tag">${item.status}</div></div>`).join('');
+        }
+
+        const catálogo = [
+            { id: 0, name: "Runic Pebble", price: 10, img: "🪨", desc: "A mystic stone found in ancient ruins. It extraction digital essence from the ether." },
+            { id: 1, name: "Ancient Obsidian", price: 25, img: "🌑", desc: "Forged in the heart of volcanoes. Its sharp edges cut through complex encryption." },
+            { id: 2, name: "Power Quartz", price: 50, img: "💎", desc: "A high-purity crystal designed to amplify energy signals focusing mining power." },
+            { id: 3, name: "Stone Totem", price: 100, img: "🗿", desc: "An ancestral figure carved that pulls wealth directly to your wallet." },
+            { id: 4, name: "Blue Monolith", price: 250, img: "🧊", desc: "A pillar of eternal ice. It stabilizes heat allowing for a steady profit flow." },
+            { id: 5, name: "Lightning Stone", price: 500, img: "⚡", desc: "Struck by thunder. It holds an electric charge that accelerates extraction." },
+            { id: 6, name: "Sacred Crystal", price: 750, img: "🔮", desc: "A legendary artifact from crystal peaks. It resonates cosmic harmony." },
+            { id: 7, name: "Pure Meteorite", price: 1000, img: "☄️", desc: "Fragment from a star. Its composition ignores gravity pulling profits." },
+            { id: 8, name: "Divine Shard", price: 2500, img: "✨", desc: "A piece of a god's crown. Its radiance lights up the dark corners." },
+            { id: 9, name: "Gaia Core", price: 5000, img: "🌍", desc: "The ultimate relic. It is the heart of the world controlling the riches." }
+        ].map(p => ({ ...p, ps: ((p.price * 1.15) / 604800) }));
+
+        function initTienda() {
+            const c = document.getElementById('lista-tienda'); if(!c) return;
+            c.innerHTML = catálogo.map(p => `
+                <div class="card-tienda">
+                    <div class="item-icon">${p.img}</div><div class="item-name">${p.name}</div>
+                    <div class="item-desc">${p.desc}</div>
+                    <div class="item-duration">Duration: 7 Days</div>
+                    <div style="font-size:32px; font-weight:900; margin-bottom:15px;" id="price-${p.id}">$ ${p.price.toFixed(2)}</div>
+                    <div class="qty-selector">
+                        <button class="qty-btn" onclick="updateQty(${p.id}, -1)">-</button>
+                        <span class="qty-num" id="qty-${p.id}">1</span>
+                        <button class="qty-btn" onclick="updateQty(${p.id}, 1)">+</button>
+                    </div>
+                    <button class="btn-buy" onclick="buyPlant(${p.id})">PURCHASE</button>
+                </div>`).join('');
+        }
+
+        function updateQty(id, ch) {
+            const el = document.getElementById(`qty-${id}`);
+            let n = Math.max(1, parseInt(el.innerText) + ch);
+            el.innerText = n;
+            const p = catálogo.find(x => x.id === id);
+            document.getElementById(`price-${id}`).innerText = `$ ${(p.price * n).toFixed(2)}`;
+        }
+        
+        function buyPlant(id) { 
+            const n = parseInt(document.getElementById(`qty-${id}`).innerText);
+            const p = catálogo.find(x => x.id === id);
+            const total = p.price * n;
+            if (wallet >= total) { 
+                wallet -= total; 
+                for(let i=0; i<n; i++) activePlants.push({ ...p, expira: Date.now()+604800000, genTotal: 0 }); 
+                updateUI(); updateCampoUI(); alert("Purchased!"); 
+            } else alert("Low Balance");
+        }
+
+        setInterval(() => { 
+            let ts=0; const now = Date.now(); 
+            activePlants = activePlants.filter(p => { if (now < p.expira) { p.genTotal += p.ps; ts += p.ps; return true; } return false; }); 
+            minedBalance += ts; updateUI(); updateCampoUI(); 
+        }, 1000);
+
+        function updateCampoUI() { 
+            const g = document.getElementById('grid-campo'); if(!g) return;
+            g.innerHTML = activePlants.map(p => {
+                const perc = Math.max(0, ((p.expira - Date.now())/604800000)*100);
+                return `<div style="background:var(--card); border-radius:20px; padding:20px; border:1px solid var(--border); text-align:center;"><div style="font-size:35px;">${p.img}</div><div style="font-size:11px; color:var(--accent); font-weight:bold;">+$${p.genTotal.toFixed(4)}</div><div style="width:100%; height:4px; background:#1a1a1e; border-radius:10px; margin-top:12px; overflow:hidden;"><div style="height:100%; width:${perc}%; background:var(--accent);"></div></div></div>`;
+            }).join('');
+        }
+
+        function collectEarnings() { if (minedBalance > 0.0001) { wallet += minedBalance; minedBalance = 0; updateUI(); } }
+        function switchTab(t, b) { document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active')); document.getElementById(t).classList.add('active'); b.classList.add('active'); }
+    </script>
+</body>
+</html>
