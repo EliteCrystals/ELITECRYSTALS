@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ELITE CRYSTALS | Final Build</title>
+    <title>ELITE CRYSTALS | Genesis Update</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -49,13 +49,13 @@
         .item-desc { color: var(--gray); font-size: 13px; line-height: 1.6; font-style: italic; margin-bottom: 15px; padding: 0 10px; }
         .item-duration { color: var(--neon-red); font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; }
         
-        /* QTY SELECTOR */
         .qty-selector { display: flex; align-items: center; justify-content: center; gap: 20px; background: #000; border-radius: 15px; padding: 10px; border: 1px solid var(--border); margin: 0 auto 20px auto; width: fit-content; }
         .qty-btn { background: #1a1a1e; border: 1px solid #333; color: white; width: 35px; height: 35px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
         .qty-num { font-size: 20px; font-weight: 900; min-width: 25px; }
 
         .custom-input { width: 100%; background: #000; border: 1px solid var(--border); padding: 18px; border-radius: 15px; color: #fff; margin-bottom: 15px; outline: none; text-align: center; font-weight: 700; box-sizing: border-box; }
         .btn-buy { background: var(--neon-green); color: #000; border: none; width: 100%; padding: 20px; border-radius: 16px; font-weight: 900; text-transform: uppercase; box-shadow: 0 0 25px var(--neon-green-glow); cursor: pointer; }
+        .btn-buy:disabled { background: #333; color: #777; box-shadow: none; cursor: not-allowed; }
 
         .waitlist-item { background: #0a0a0a; border: 1px solid #1a1a1e; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left;}
         .status-tag { color: #facc15; font-size: 10px; font-weight: 900; text-transform: uppercase; background: rgba(250, 204, 21, 0.1); padding: 4px 8px; border-radius: 5px; }
@@ -129,6 +129,7 @@
         let activePlants = JSON.parse(localStorage.getItem('ec_plants')) || [];
         let minedBalance = parseFloat(localStorage.getItem('ec_mined')) || 0;
         let waitlist = JSON.parse(localStorage.getItem('ec_waitlist')) || [];
+        let genesisClaimed = localStorage.getItem('ec_genesis') === 'true';
         let lastTime = parseInt(localStorage.getItem('ec_last_sync')) || Date.now();
 
         let pL = 0; 
@@ -160,6 +161,7 @@
             localStorage.setItem('ec_plants', JSON.stringify(activePlants));
             localStorage.setItem('ec_mined', minedBalance);
             localStorage.setItem('ec_waitlist', JSON.stringify(waitlist));
+            localStorage.setItem('ec_genesis', genesisClaimed);
             localStorage.setItem('ec_last_sync', Date.now());
         }
 
@@ -178,7 +180,9 @@
 
         function runVerification() {
             const amt = parseFloat(document.getElementById('dep-amt').value);
+            const hash = document.getElementById('dep-hash').value;
             if(!amt || amt < 10) return alert("Min $10");
+            if(!hash || hash.length < 10) return alert("Hash must be at least 10 digits");
             wallet += amt; updateUI(); alert("SUCCESS! Balance updated.");
         }
 
@@ -198,6 +202,7 @@
         }
 
         const catálogo = [
+            { id: 99, name: "Genesis Stone", price: 0, img: "🌀", desc: "A gift for new explorers. Generates $8.00 over 7 days. Can only be claimed once.", isGenesis: true },
             { id: 0, name: "Runic Pebble", price: 10, img: "🪨", desc: "A mystic stone found in ancient ruins. It extraction digital essence from the ether." },
             { id: 1, name: "Ancient Obsidian", price: 25, img: "🌑", desc: "Forged in the heart of volcanoes. Its sharp edges cut through complex encryption." },
             { id: 2, name: "Power Quartz", price: 50, img: "💎", desc: "A high-purity crystal designed to amplify energy signals focusing mining power." },
@@ -208,27 +213,40 @@
             { id: 7, name: "Pure Meteorite", price: 1000, img: "☄️", desc: "Fragment from a star. Its composition ignores gravity pulling profits." },
             { id: 8, name: "Divine Shard", price: 2500, img: "✨", desc: "A piece of a god's crown. Its radiance lights up the dark corners." },
             { id: 9, name: "Gaia Core", price: 5000, img: "🌍", desc: "The ultimate relic. It is the heart of the world controlling the riches." }
-        ].map(p => ({ ...p, ps: ((p.price * 1.15) / 604800) }));
+        ].map(p => {
+            if(p.isGenesis) return { ...p, ps: (8 / 604800) };
+            return { ...p, ps: ((p.price * 1.15) / 604800) };
+        });
 
         function initTienda() {
             const c = document.getElementById('lista-tienda'); if(!c) return;
-            c.innerHTML = catálogo.map(p => `
+            c.innerHTML = catálogo.map(p => {
+                if(p.isGenesis && genesisClaimed) {
+                    return `<div class="card-tienda" style="opacity:0.5">
+                        <div class="item-icon">${p.img}</div><div class="item-name">${p.name}</div>
+                        <div style="color:var(--neon-green); font-weight:bold; margin-bottom:10px;">CLAIMED ✓</div>
+                        <div class="item-desc">${p.desc}</div>
+                    </div>`;
+                }
+                return `
                 <div class="card-tienda">
                     <div class="item-icon">${p.img}</div><div class="item-name">${p.name}</div>
                     <div class="item-desc">${p.desc}</div>
                     <div class="item-duration">Duration: 7 Days</div>
                     <div style="font-size:32px; font-weight:900; margin-bottom:15px;" id="price-${p.id}">$ ${p.price.toFixed(2)}</div>
+                    ${p.isGenesis ? '' : `
                     <div class="qty-selector">
                         <button class="qty-btn" onclick="updateQty(${p.id}, -1)">-</button>
                         <span class="qty-num" id="qty-${p.id}">1</span>
                         <button class="qty-btn" onclick="updateQty(${p.id}, 1)">+</button>
-                    </div>
-                    <button class="btn-buy" onclick="buyPlant(${p.id})">PURCHASE</button>
-                </div>`).join('');
+                    </div>`}
+                    <button class="btn-buy" id="btn-${p.id}" onclick="buyPlant(${p.id})">${p.isGenesis ? 'CLAIM GIFT' : 'PURCHASE'}</button>
+                </div>`;
+            }).join('');
         }
 
         function updateQty(id, ch) {
-            const el = document.getElementById(`qty-${id}`);
+            const el = document.getElementById(`qty-${id}`); if(!el) return;
             let n = Math.max(1, parseInt(el.innerText) + ch);
             el.innerText = n;
             const p = catálogo.find(x => x.id === id);
@@ -236,13 +254,17 @@
         }
         
         function buyPlant(id) { 
-            const n = parseInt(document.getElementById(`qty-${id}`).innerText);
             const p = catálogo.find(x => x.id === id);
+            if(p.isGenesis && genesisClaimed) return;
+
+            const n = p.isGenesis ? 1 : parseInt(document.getElementById(`qty-${id}`).innerText);
             const total = p.price * n;
+
             if (wallet >= total) { 
                 wallet -= total; 
+                if(p.isGenesis) genesisClaimed = true;
                 for(let i=0; i<n; i++) activePlants.push({ ...p, expira: Date.now()+604800000, genTotal: 0 }); 
-                updateUI(); updateCampoUI(); alert("Purchased!"); 
+                updateUI(); updateCampoUI(); initTienda(); alert(p.isGenesis ? "Genesis Gift Claimed!" : "Purchased!"); 
             } else alert("Low Balance");
         }
 
